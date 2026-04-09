@@ -12,11 +12,7 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_recycle=300,
-    connect_args={
-        "sslmode": "require",
-        "connect_timeout": 10
-    }
+    pool_recycle=300
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
