@@ -145,7 +145,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Payment config missing")
 
     amount = int(os.getenv("PAYMENT_AMOUNT", 50))
-    order_id = f"ORDER_{uuid.uuid4().hex}"
+    order_id = f"ORDER-{uuid.uuid4().hex}"
 
     # 🔐 Basic Auth
     auth_string = f"{MERCHANT_USERNAME}:{MERCHANT_PASSWORD}"
@@ -170,6 +170,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
         "amount": amount,
         "currency": "PKR",
         "order_id": order_id,
+        "notification_url": "https://web-production-1f476a.up.railway.app/webhook",
         "success_url": "https://mizaaj-frontend.vercel.app/payment-success.html",
         "error_url": "https://mizaaj-frontend.vercel.app/mizaj-payment.html",
         "products": [
