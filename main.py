@@ -136,7 +136,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
     if not all([MERCHANT_ID, PROVIDER_ID, SERVICE_ID, PRIVATE_KEY]):
         raise HTTPException(status_code=500, detail="Payment config missing")
 
-    amount = "2500"
+    amount = "50"
     order_id = f"ORDER_{uuid.uuid4().hex}"
 
     # 🔐 SIGNATURE (adjust based on gateway docs)
@@ -206,7 +206,7 @@ def verify_payment(request: Request, db: Session = Depends(get_db)):
     # ✅ Save payment
     crud.create_payment(db, schemas.PaymentSchema(
         user_id=int(user_id),
-        amount=2500
+        amount=50
     ))
 
     return {"message": "Payment verified successfully"}
