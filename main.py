@@ -8,7 +8,7 @@ import base64
 import hashlib
 import hmac
 
-from database import SessionLocal, engine
+from database import SessionLocal
 import models, crud, schemas
 from utils import verify_password
 
@@ -26,24 +26,19 @@ PUBLIC_KEY = os.getenv("PUBLIC_KEY")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
 # =========================
-# 🌐 CORS (FIXED)
+# 🌐 CORS
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://mizaaj-frontend.vercel.app"],  # 🔥 fixed
+    allow_origins=["https://mizaaj-frontend.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # =========================
-# 🗄️ DB INIT
+# 🗄️ DB SESSION
 # =========================
-@app.on_event("startup")
-def on_startup():
-    models.Base.metadata.create_all(bind=engine)
-
-
 def get_db():
     db = SessionLocal()
     try:
@@ -58,6 +53,7 @@ def get_db():
 @app.post("/signup")
 def signup(data: schemas.SignupSchema, db: Session = Depends(get_db)):
     existing = crud.get_user_by_email(db, data.email)
+
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
 
@@ -122,7 +118,7 @@ def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_d
 
 
 # =========================
-# 💳 CREATE CHECKOUT SESSION (FINAL FIXED)
+# 💳 CREATE PAYMENT
 # =========================
 @app.post("/create-payment")
 def create_payment(user_id: int, db: Session = Depends(get_db)):
@@ -201,7 +197,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# ✅ VERIFY PAYMENT (SECURE FIXED)
+# ✅ VERIFY PAYMENT
 # =========================
 @app.get("/verify-payment")
 def verify_payment(
@@ -221,7 +217,7 @@ def verify_payment(
         hashlib.sha256
     ).hexdigest()
 
-    # 🔥 secure comparison
+    # 🔒 secure comparison
     if not hmac.compare_digest(computed_hash, hash):
         raise HTTPException(status_code=400, detail="Invalid payment verification")
 
@@ -258,6 +254,3 @@ def get_result(user_id: int, db: Session = Depends(get_db)):
 @app.get("/")
 def root():
     return {"message": "Mizaaj API is running 🚀"}
-
-
-PORT = int(os.environ.get("PORT", 8000))
