@@ -118,7 +118,8 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
             {
                 "name": "Mizaaj Test",
                 "quantity": 1,
-                "price": amount
+                "price": amount,
+                "image": "https://dummyimage.com/300x300/000/fff.png"
             }
         ]
     }
