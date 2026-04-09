@@ -161,7 +161,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
 
     signature = f"{PUBLIC_KEY}:{signature_hash}"
 
-    url = "https://checkout-ms.dev.dialog-pay.com/api/v1/checkout/session"
+    url = "https://checkout-ms.dialog-pay.com/api/v1/checkout/session"
 
     payload = {
         "database_name": DATABASE_NAME,
