@@ -7,7 +7,8 @@ import requests
 import base64
 import hashlib
 import hmac
-
+from database import engine
+import models
 from database import SessionLocal
 import models, crud, schemas
 from utils import verify_password
@@ -45,6 +46,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@app.on_event("startup")
+def create_tables():
+    models.Base.metadata.create_all(bind=engine)
 
 
 # =========================
