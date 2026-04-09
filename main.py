@@ -30,7 +30,7 @@ PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://mizaaj-frontend.vercel.app"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
