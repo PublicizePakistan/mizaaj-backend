@@ -66,7 +66,7 @@ def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     return {"user_id": user.id}
 
 # =========================
-# 🧠 ACCESS
+# 🧠 ACCESS CONTROL
 # =========================
 @app.get("/check-access/{user_id}")
 def check_access(user_id: int, db: Session = Depends(get_db)):
@@ -85,6 +85,17 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
 
     order_id = f"ORDER-{uuid.uuid4().hex}"
     amount = int(os.getenv("PAYMENT_AMOUNT", 50))
+
+    # ✅ SAVE PAYMENT FIRST
+    payment = models.Payment(
+        user_id=user_id,
+        order_id=order_id,
+        amount=amount,
+        status="pending"
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
 
     # 🔐 Signature
     data_to_sign = f"{DATABASE_NAME}|{MERCHANT_ID}|{PAYMENT_SERVICE_ID}|{MERCHANT_PASSWORD}"
@@ -116,7 +127,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
 
         "products": [
             {
-                "name": "Mizaaj Test",
+                "name": "Mizaaj Personality Test",
                 "quantity": 1,
                 "price": amount,
                 "image": "https://dummyimage.com/300x300/000/fff.png"
@@ -151,26 +162,42 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(500, "Payment failed")
 
 # =========================
-# 🔔 WEBHOOK
+# 🔔 WEBHOOK (PRODUCTION SAFE)
 # =========================
 @app.post("/webhook")
 async def webhook(request: Request, db: Session = Depends(get_db)):
+
+    # 🔐 Basic protection
+    signature = request.headers.get("x-signature-256")
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing signature")
+
     data = await request.json()
     print("WEBHOOK:", data)
 
     order_id = data.get("order_id")
     status = data.get("status")
+    transaction_id = data.get("transaction_id")
 
-    print("STATUS:", status)
+    payment = db.query(models.Payment).filter(
+        models.Payment.order_id == order_id
+    ).first()
+
+    if not payment:
+        print("❌ Payment not found:", order_id)
+        return {"status": "not_found"}
+
+    # ✅ Update payment
+    payment.status = status
+    payment.transaction_id = transaction_id
 
     if status == "success":
-        # 🔥 TEMP FIX (works for now)
-        user = db.query(models.User).filter(models.User.id == 1).first()
+        print(f"✅ Payment success for user {payment.user_id}")
 
-        if user:
-            user.has_paid = True
-            db.commit()
-            print("✅ Payment saved in DB")
+    elif status == "failed":
+        print(f"❌ Payment failed: {order_id}")
+
+    db.commit()
 
     return {"status": "ok"}
 

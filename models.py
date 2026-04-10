@@ -64,12 +64,13 @@ class Payment(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
 
+    order_id = Column(String, unique=True, index=True)  # 🔥 CRITICAL
+    transaction_id = Column(String)
+
     amount = Column(Integer)
     currency = Column(String, default="PKR")
 
-    status = Column(String, default="pending")
-    payment_method = Column(String)
-    transaction_id = Column(String)
+    status = Column(String, default="pending")  # pending / success / failed
 
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 

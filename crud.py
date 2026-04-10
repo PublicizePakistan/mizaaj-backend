@@ -93,26 +93,12 @@ def complete_attempt(db: Session, attempt_id: int, result_type: str):
     return result
 
 
-# ✅ CREATE PAYMENT
-def create_payment(db: Session, data):
-    payment = models.Payment(
-        user_id=data.user_id,
-        amount=data.amount,
-        payment_method=data.payment_method,
-        status="completed"
-    )
-    db.add(payment)
-    db.commit()
-    db.refresh(payment)
-    return payment
-
-
 # ✅ CHECK PAYMENT (STRICT)
 def has_paid(db: Session, user_id: int):
     return db.query(models.Payment).filter(
         models.Payment.user_id == user_id,
-        models.Payment.status == "completed"
-    ).first()
+        models.Payment.status == "success"
+    ).first() is not None
 
 
 # ✅ SAVE RESULT (OPTIONAL UTILITY)
