@@ -74,6 +74,64 @@ def check_access(user_id: int, db: Session = Depends(get_db)):
         return {"access": "payment"}
     return {"access": "test"}
 
+
+# =========================
+# 🧪 START TEST
+# =========================
+@app.post("/start-test")
+def start_test(user_id: int, db: Session = Depends(get_db)):
+
+    if not crud.has_paid(db, user_id):
+        raise HTTPException(403, "Payment required")
+
+    attempt = crud.create_attempt(db, user_id)
+    return {"attempt_id": attempt.id}
+
+
+# =========================
+# 📝 SAVE ANSWER
+# =========================
+@app.post("/answer")
+def answer(data: schemas.AnswerSchema, db: Session = Depends(get_db)):
+    try:
+        crud.save_answer(db, data)
+        return {"message": "Saved"}
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+
+# =========================
+# ✅ COMPLETE TEST
+# =========================
+@app.post("/complete-test")
+def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_db)):
+
+    result = crud.complete_attempt(db, attempt_id, result_type)
+
+    if not result:
+        raise HTTPException(404, "Invalid attempt")
+
+    return {"message": "Completed"}
+
+
+# =========================
+# 📊 GET RESULT
+# =========================
+@app.get("/result/{user_id}")
+def get_result(user_id: int, db: Session = Depends(get_db)):
+
+    result = db.query(models.Result).filter(
+        models.Result.user_id == user_id
+    ).first()
+
+    if not result:
+        raise HTTPException(404, "No result")
+
+    return {
+        "type": result.personality_type,
+        "summary": result.summary
+    }
+
 # =========================
 # 💳 CREATE PAYMENT
 # =========================
