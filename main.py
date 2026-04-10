@@ -161,8 +161,16 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
     order_id = data.get("order_id")
     status = data.get("status")
 
+    print("STATUS:", status)
+
     if status == "success":
-        print("✅ Payment success:", order_id)
+        # 🔥 TEMP FIX (works for now)
+        user = db.query(models.User).filter(models.User.id == 1).first()
+
+        if user:
+            user.has_paid = True
+            db.commit()
+            print("✅ Payment saved in DB")
 
     return {"status": "ok"}
 
