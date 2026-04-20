@@ -142,7 +142,7 @@ def create_payment(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(400, "Already paid")
 
     order_id = f"ORDER-{uuid.uuid4().hex}"
-    amount = int(os.getenv("PAYMENT_AMOUNT", 10))
+    amount = int(os.getenv("PAYMENT_AMOUNT", 2500))
 
     # ✅ SAVE PAYMENT FIRST
     payment = models.Payment(
