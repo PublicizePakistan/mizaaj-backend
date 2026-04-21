@@ -20,7 +20,8 @@ MERCHANT_PASSWORD = os.getenv("MERCHANT_PASSWORD")
 PUBLIC_KEY = os.getenv("PUBLIC_KEY")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
-FRONTEND_URL = "https://mizaaj-frontend.vercel.app"
+#FRONTEND_URL = "https://mizaaj-frontend.vercel.app"
+FRONTEND_URL = "https://mizaj.pk"
 BACKEND_URL = "https://web-production-1f476a.up.railway.app"
 
 # =========================
