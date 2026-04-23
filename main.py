@@ -107,12 +107,19 @@ def answer(data: schemas.AnswerSchema, db: Session = Depends(get_db)):
 @app.post("/complete-test")
 def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_db)):
 
+    if not attempt_id or not result_type:
+        raise HTTPException(400, "attempt_id and result_type are required")
+
     result = crud.complete_attempt(db, attempt_id, result_type)
 
     if not result:
         raise HTTPException(404, "Invalid attempt")
 
-    return {"message": "Completed"}
+    return {
+        "message": "Completed",
+        "personality_type": result.personality_type,
+        "user_id": result.user_id
+    }
 
 
 # =========================

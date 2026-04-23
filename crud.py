@@ -52,7 +52,7 @@ def save_answer(db: Session, data):
     return ans
 
 
-# ✅ COMPLETE TEST + CREATE RESULT (SAFE)
+# ✅ COMPLETE TEST + CREATE RESULT (FIXED)
 def complete_attempt(db: Session, attempt_id: int, result_type: str):
     attempt = db.get(models.TestAttempt, attempt_id)
 
@@ -64,11 +64,13 @@ def complete_attempt(db: Session, attempt_id: int, result_type: str):
         existing = db.query(models.Result).filter(
             models.Result.attempt_id == attempt_id
         ).first()
-        return existing
+        if existing:
+            return existing
 
-    # ✅ update attempt
+    # ✅ update attempt status and commit first
     attempt.status = "completed"
     attempt.result_type = result_type
+    db.commit()  # ✅ CRITICAL — must commit before creating result
 
     # 🔴 check if result already exists
     existing = db.query(models.Result).filter(
