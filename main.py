@@ -107,19 +107,12 @@ def answer(data: schemas.AnswerSchema, db: Session = Depends(get_db)):
 @app.post("/complete-test")
 def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_db)):
 
-    if not attempt_id or not result_type:
-        raise HTTPException(400, "attempt_id and result_type are required")
-
     result = crud.complete_attempt(db, attempt_id, result_type)
 
     if not result:
         raise HTTPException(404, "Invalid attempt")
 
-    return {
-        "message": "Completed",
-        "personality_type": result.personality_type,
-        "user_id": result.user_id
-    }
+    return {"message": "Completed"}
 
 
 # =========================
@@ -128,9 +121,10 @@ def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_d
 @app.get("/result/{user_id}")
 def get_result(user_id: int, db: Session = Depends(get_db)):
 
+    # ✅ Get the LATEST result, not the first one
     result = db.query(models.Result).filter(
         models.Result.user_id == user_id
-    ).first()
+    ).order_by(models.Result.created_at.desc()).first()
 
     if not result:
         raise HTTPException(404, "No result")
