@@ -7,7 +7,7 @@ from database import engine, SessionLocal
 import models, crud, schemas
 from utils import verify_password
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)  # ✅ disable public API docs
 
 # =========================
 # 🔐 ENV VARIABLES
@@ -20,7 +20,6 @@ MERCHANT_PASSWORD = os.getenv("MERCHANT_PASSWORD")
 PUBLIC_KEY = os.getenv("PUBLIC_KEY")
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
-#FRONTEND_URL = "https://mizaaj-frontend.vercel.app"
 FRONTEND_URL = "https://mizaj.pk"
 BACKEND_URL = "https://web-production-1f476a.up.railway.app"
 
@@ -29,10 +28,14 @@ BACKEND_URL = "https://web-production-1f476a.up.railway.app"
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://mizaj.pk",
+        "https://www.mizaj.pk",
+        "https://mizaaj-frontend.vercel.app"  # keep during transition
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization", "x-signature-256"],
 )
 
 # =========================
@@ -104,15 +107,33 @@ def answer(data: schemas.AnswerSchema, db: Session = Depends(get_db)):
 # =========================
 # ✅ COMPLETE TEST
 # =========================
+VALID_MBTI_TYPES = {
+    "INTJ","INTP","ENTJ","ENTP",
+    "INFJ","INFP","ENFJ","ENFP",
+    "ISTJ","ISFJ","ESTJ","ESFJ",
+    "ISTP","ISFP","ESTP","ESFP"
+}
+
 @app.post("/complete-test")
 def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_db)):
 
-    result = crud.complete_attempt(db, attempt_id, result_type)
+    if not attempt_id or not result_type:
+        raise HTTPException(400, "attempt_id and result_type are required")
+
+    # ✅ Validate result_type is a real MBTI type
+    if result_type.upper() not in VALID_MBTI_TYPES:
+        raise HTTPException(400, f"Invalid result_type: {result_type}")
+
+    result = crud.complete_attempt(db, attempt_id, result_type.upper())
 
     if not result:
         raise HTTPException(404, "Invalid attempt")
 
-    return {"message": "Completed"}
+    return {
+        "message": "Completed",
+        "personality_type": result.personality_type,
+        "user_id": result.user_id
+    }
 
 
 # =========================
@@ -121,7 +142,6 @@ def complete_test(attempt_id: int, result_type: str, db: Session = Depends(get_d
 @app.get("/result/{user_id}")
 def get_result(user_id: int, db: Session = Depends(get_db)):
 
-    # ✅ Get the LATEST result, not the first one
     result = db.query(models.Result).filter(
         models.Result.user_id == user_id
     ).order_by(models.Result.created_at.desc()).first()
